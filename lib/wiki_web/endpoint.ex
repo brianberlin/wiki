@@ -1,8 +1,6 @@
 defmodule WikiWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :wiki
 
-  socket "/live", Phoenix.LiveView.Socket
-
   socket "/socket", WikiWeb.UserSocket,
     websocket: true,
     longpoll: false

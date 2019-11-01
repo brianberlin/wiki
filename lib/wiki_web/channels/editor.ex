@@ -1,33 +1,35 @@
-defmodule WikiWeb.EditorLive do
-  use Phoenix.LiveView
-  import Phoenix.HTML, only: [raw: 1]
-  def render(assigns) do
-    ~L"""
-    <div phx-keydown="key_down" phx-target="window"><%= raw(@content) %></div>
-    """
-  end
+defmodule WikiWeb.EditorChannel do
+  use WikiWeb, :channel
 
-  def mount(_session, socket) do
+  def join("editor:generic", _, socket) do
     {
       :ok,
-      assign(
-        socket,
-        content: "<p>|",
-        element: "p"
-      )
+      socket
+      |> assign(:content, "<p>|")
+      |> assign(:element, "p")
     }
   end
 
-  def handle_event("key_down", params, socket) do
-    {:noreply, response(socket, params)}
+  def diff(old, new) do
+    old
+    |> String.myers_difference(new)
+    |> Enum.map(fn
+      {:eq, value} -> String.length(value)
+      {key, value} -> [key, value]
+    end)
   end
 
-  def response(%{assigns: %{content: content, element: element}} = socket, params) do
-    IO.inspect(params)
+  def handle_in("key_down", params, %{assigns: %{content: content, element: element}} = socket) do
     [left, right] = String.split(content, "|")
-    content = update_content(left, right, params, element)
-    element = update_element(params, element)
-    assign(socket, content: content, element: element)
+    new_content = update_content(left, right, params, element)
+    push(socket, "update", %{diff: diff(content, new_content)})
+
+    socket =
+      socket
+      |> assign(:content, new_content)
+      |> assign(:element, update_element(params, element))
+
+    {:noreply, socket}
   end
 
   defp update_content(left, right, %{"altKey" => altKey, "code" => "Backspace"}, _) do

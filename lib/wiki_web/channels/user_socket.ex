@@ -1,8 +1,7 @@
 defmodule WikiWeb.UserSocket do
   use Phoenix.Socket
 
-  ## Channels
-  # channel "room:*", WikiWeb.RoomChannel
+  channel "editor:*", WikiWeb.EditorChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
