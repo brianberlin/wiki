@@ -1,0 +1,1 @@
+<textarea data-editor="<%= @id %>"></textarea>

@@ -1,4 +1,15 @@
-/* This file is for your main application css. */
-
-@import "./phoenix.css";
-@import "../../deps/phoenix_live_view/assets/css/live_view.css";
+body {
+    margin: 0;
+    padding: 0;
+}
+textarea {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 20px;
+    appearance: none;
+    outline: none;
+    font-size: 20px;
+    line-height: 28px;
+}
