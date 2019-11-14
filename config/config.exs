@@ -7,9 +7,6 @@
 # General application configuration
 use Mix.Config
 
-config :wiki,
-  ecto_repos: [Wiki.Repo]
-
 # Configures the endpoint
 config :wiki, WikiWeb.Endpoint,
   url: [host: "localhost"],
