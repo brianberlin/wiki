@@ -11,27 +11,20 @@ defmodule WikiWeb.EditorChannel do
     end
     :ok = Phoenix.PubSub.subscribe(Wiki.PubSub, id)
     socket = assign_editor(socket, id)
-    %{assigns: %{editor: %{lines: lines}}} = socket
+    %{assigns: %{editor: %{content: content}}} = socket
 
-    {:ok, lines, socket}
+    {:ok, Map.from_struct(content), socket}
   end
 
-  def handle_in("update", %{"content" => content, "line_number" => line_number}, %{assigns: %{id: id}} = socket) do
-    GenServer.cast(via_tuple(id), {:update, line_number, content})
-    broadcast_from(socket, "line_change", %{line_number: line_number, content: content})
+  def handle_in("update", %{"delta" => delta}, %{assigns: %{id: id}} = socket) do
+    GenServer.cast(via_tuple(id), {:update, AtomicMap.convert(delta, %{safe: false})})
+    broadcast_from(socket, "update", %{delta: delta})
 
     {:noreply, assign_editor(socket)}
   end
 
-  def handle_in("new_state", _, %{assigns: %{editor: %{lines: lines}}} = socket) do
-    push(socket, "new_state", %{lines: lines})
-    {:noreply, assign_editor(socket)}
-  end
-
-  def handle_info(:md5_check, socket) do
-    editor = GenServer.call(via_tuple(socket.assigns.id), :editor)
-
-    broadcast(socket, "md5_check", %{md5: editor.md5})
+  def handle_in("new_state", _, %{assigns: %{editor: %{content: content}}} = socket) do
+    push(socket, "new_state", %{content: content})
     {:noreply, assign_editor(socket)}
   end
 

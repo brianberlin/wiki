@@ -1,10 +1,13 @@
 defmodule Wiki.Editor do
   use GenServer, restart: :transient
   alias Wiki.Editor
+  require Protocol
+
+  Protocol.derive(Jason.Encoder, TextDelta, only: [:ops])
 
   @id_length 12
 
-  defstruct id: nil, lines: [], md5: nil
+  defstruct id: nil, content: TextDelta.new()
 
   def create() do
     @id_length
@@ -29,35 +32,22 @@ defmodule Wiki.Editor do
   end
 
   @impl true
-  def handle_cast({:update, line_number, content}, editor) do
-    editor = Editor.update(editor, line_number - 1, content)
-    {:noreply, editor, {:continue, :md5_check}}
+  def handle_cast({:update, delta}, editor) do
+    editor = Editor.update(editor, delta)
+    {:noreply, editor, editor}
   end
 
   @impl true
-  def handle_continue(:md5_check, editor) do
-    Phoenix.PubSub.broadcast(Wiki.PubSub, editor.id, :md5_check)
+  def handle_cast(_, editor) do
     {:noreply, editor}
   end
 
-  def update(%{id: id, lines: lines}, line_number, content) do
-    count = Enum.count(lines) - 1
-
-    lines =
-      cond do
-        count < line_number ->
-          List.insert_at(lines, line_number, content)
-
-        true ->
-          List.replace_at(lines, line_number, content)
-      end
-
-    %{id: id, lines: lines, md5: md5(lines)}
-  end
-
-  defp md5(lines) do
-    :md5
-    |> :crypto.hash(Enum.join(lines, "\n"))
-    |> Base.encode16(case: :lower)
+  def update(%{id: id, content: content}, delta) do
+    case TextDelta.apply(content, delta) do
+      {:ok, new_content} ->
+        %{id: id, content: new_content}
+      _ ->
+        %{id: id, content: content}
+    end
   end
 end
