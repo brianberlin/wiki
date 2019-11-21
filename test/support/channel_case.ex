@@ -24,14 +24,4 @@ defmodule WikiWeb.ChannelCase do
       @endpoint WikiWeb.Endpoint
     end
   end
-
-  setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Wiki.Repo)
-
-    unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Wiki.Repo, {:shared, self()})
-    end
-
-    :ok
-  end
 end

@@ -32,9 +32,14 @@ defmodule Wiki.Editor do
   end
 
   @impl true
-  def handle_cast({:update, delta}, editor) do
-    editor = Editor.update(editor, delta)
-    {:noreply, editor, editor}
+  def handle_call({:diff, old_editor}, _from, editor) do
+    {:reply, diff(old_editor, editor), editor}
+  end
+
+  @impl true
+  def handle_cast({:update, ops, user_id}, editor) do
+    editor = update(editor, ops)
+    {:noreply, editor, {:continue, {:updated, user_id}}}
   end
 
   @impl true
@@ -42,12 +47,23 @@ defmodule Wiki.Editor do
     {:noreply, editor}
   end
 
-  def update(%{id: id, content: content}, delta) do
-    case TextDelta.apply(content, delta) do
+  @impl true
+  def handle_continue({:updated, user_id}, editor) do
+    :ok = Phoenix.PubSub.broadcast(Wiki.PubSub, editor.id, {:updated, user_id})
+
+    {:noreply, editor}
+  end
+
+  defp update(%{id: id, content: content}, ops) do
+    case TextDelta.apply(content, %{ops: ops}) do
       {:ok, new_content} ->
         %{id: id, content: new_content}
-      _ ->
+      _error ->
         %{id: id, content: content}
     end
+  end
+
+  defp diff(%{content: %{ops: old_ops}}, %{content: %{ops: ops}}) do
+    TextDelta.diff!(%{ops: old_ops}, %{ops: ops})
   end
 end

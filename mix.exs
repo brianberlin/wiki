@@ -40,7 +40,9 @@ defmodule Wiki.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:text_delta, "~> 1.4"},
-      {:atomic_map, "~> 0.8"}
+      {:atomic_map, "~> 0.8"},
+      {:uuid, "~> 1.1"},
+      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 end

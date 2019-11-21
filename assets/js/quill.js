@@ -1,4 +1,4 @@
-import {update} from './editor'
+import {update, check} from './editor'
 
 const Clipboard = Quill.import('modules/clipboard')
 const Delta = Quill.import('delta')
@@ -16,17 +16,15 @@ class PlainClipboard extends Clipboard {
 
 Quill.register('modules/clipboard', PlainClipboard, true)
 
-const quill = new Quill('#editor', {theme: 'snow'})
+const quill = new Quill('#editor', {theme: 'bubble', placeholder: "Start typing..."})
 
-quill.on('text-change', function(delta, oldDelta, source) {
-  if (source == 'api') {
-    console.log("An API call triggered this change.")
-  } else if (source == 'user') {
-    update({delta})
+quill.on('text-change', function sendUpdate(delta, oldDelta, source) {
+  if (source === 'user') {
+    update(delta)
   }
 })
 
-export function applyDelta({delta: {ops}}) {
+export function applyDelta({ops}) {
   const contents = new Delta()
   ops.forEach(({attributes = {}, retain, insert, delete: deleteOp}) => {
     if (retain) {
@@ -38,8 +36,9 @@ export function applyDelta({delta: {ops}}) {
     }
   })
   quill.updateContents(contents)
+  check(quill.getContents())
 }
 
-export function setContent(contents) {
-  quill.setContents(contents)
+export function setContent({ops}) {
+  quill.setContents(ops)
 }
