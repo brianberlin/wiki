@@ -17,7 +17,7 @@ defmodule WikiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
-    get "/:id", PageController, :editor
+    get "/*editor", PageController, :editor
   end
 
   # Other scopes may use custom stacks.

@@ -4,6 +4,7 @@ defmodule Wiki.Application do
   def start(_type, _args) do
     children = [
       WikiWeb.Endpoint,
+      WikiWeb.Presence,
       {DynamicSupervisor, strategy: :one_for_one, name: Wiki.EditorSupervisor},
       {Registry, keys: :unique, name: Wiki.EditorRegistry},
     ]

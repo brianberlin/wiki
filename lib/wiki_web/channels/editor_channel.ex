@@ -1,19 +1,11 @@
 defmodule WikiWeb.EditorChannel do
   use WikiWeb, :channel
-
   alias Wiki.{Editor, EditorRegistry, EditorSupervisor}
-  def join("editor:" <> id, _, socket) when is_binary(id) do
-    maybe_start_child(id)
-    :ok = Phoenix.PubSub.subscribe(Wiki.PubSub, id)
-    editor = GenServer.call(via_tuple(id), :editor)
-    user_id = UUID.uuid4()
-    socket =
-      socket
-      |> assign(:id, id)
-      |> assign(:editor, editor)
-      |> assign(:user_id, user_id)
+  alias WikiWeb.Presence
 
-    {:ok, editor.content, socket}
+  def join("editor", %{"id" => id}, socket) do
+    send(self(), {:after_join, id})
+    {:ok, socket}
   end
 
   def handle_in("update", %{"ops" => ops}, %{assigns: %{id: id, user_id: user_id}} = socket) do
@@ -26,6 +18,27 @@ defmodule WikiWeb.EditorChannel do
     if editor_hash(socket.assigns.editor) !== md5 do
       push(socket, "clean", socket.assigns.editor.content)
     end
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:after_join, id}, socket) do
+    maybe_start_child(id)
+    :ok = Phoenix.PubSub.subscribe(Wiki.PubSub, id)
+    editor = GenServer.call(via_tuple(id), :editor)
+
+    socket =
+      socket
+      |> assign(:id, id)
+      |> assign(:editor, editor)
+
+    push(socket, "presence_state", Presence.list(socket))
+    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+      online_at: inspect(System.system_time(:second)),
+      current_editor: id
+    })
+
+    push(socket, "clean", socket.assigns.editor.content)
 
     {:noreply, socket}
   end

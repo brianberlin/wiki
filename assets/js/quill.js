@@ -35,10 +35,12 @@ export function applyDelta({ops}) {
       contents.delete(deleteOp)
     }
   })
+  console.log('update contents')
   quill.updateContents(contents)
   check(quill.getContents())
 }
 
 export function setContent({ops}) {
+  console.log('set contents')
   quill.setContents(ops)
 }
