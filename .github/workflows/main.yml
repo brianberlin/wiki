@@ -1,0 +1,16 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Adds gigalixir remote
+      run: git remote add gigalixir https://bri%40nberl.in:fcbb2774-8289-40bf-b3c4-5453319bdf5e@git.gigalixir.com/dependable-previous-dwarfrabbit.git
+    - name: Push to gigalixir
+      run: git push gigalixir master
+
